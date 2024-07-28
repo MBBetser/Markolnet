@@ -1,5 +1,5 @@
 from .db import get_connection
-from .utils import arr2json
+from .myutils import arr2json
 
 # Users
 def add_user(username, password, email, phone_numer, user_type):

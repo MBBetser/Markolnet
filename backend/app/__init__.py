@@ -1,7 +1,7 @@
 from flask import Flask
 import os
 from . import db
-import json
+from .routes import all_blueprints
 
 def create_app():
     app = Flask(__name__)
@@ -14,12 +14,11 @@ def create_app():
         os.makedirs(app.instance_path)
     except OSError:
         pass
-    
+    db.init_app(app)
+    for blueprint in all_blueprints:
+        app.register_blueprint(blueprint)
     @app.route('/')
     def test():
-        return 'hey'
-
-    db.init_app(app)
-
+        return 'Hey from main route!'
     return app
 

@@ -1,5 +1,5 @@
 from .db import get_connection
-
+from .utils import arr2json
 
 # Users
 def add_user(username, password, email, phone_numer, user_type):
@@ -23,18 +23,17 @@ def get_user_by_username(username):
         cursor.execute(query, (username,))
         return cursor.fetchone()
     
-
 #Stores
 
-def add_store(store_name, onwer_id, address, phone_number, email):
+def add_store(store_name, onwer_id, address, phone_number):
     conn = get_connection()
     with conn:
         cursor = conn.cursor()
         query = '''
-                    INSERT INTO stores (store_name, owner_id, address, phone_number, email) 
-                    VALUES (?, ?, ?, ?, ?);
+                    INSERT INTO stores (store_name, owner_id, address, phone_number) 
+                    VALUES (?, ?, ?, ?);
                 '''
-        cursor.execute(query, (store_name, onwer_id, address, phone_number, email))
+        cursor.execute(query, (store_name, onwer_id, address, phone_number))
         return cursor.lastrowid
 
 def get_store_by_id(store_id):
@@ -79,3 +78,60 @@ def get_product_by_id(product_id):
                 '''
         cursor.execute(query, (product_id,))
         return cursor.fetchone()
+    
+# store products
+
+def add_store_product(store_id, product_id, quantity, price):
+    conn = get_connection()
+    with conn:
+        cursor = conn.cursor()
+        query = '''
+                    INSERT INTO store_products (store_id, product_id, price, quantity) 
+                    VALUES (?, ?, ?);
+                '''
+        cursor.execute(query, (store_id, product_id, quantity))
+        return cursor.lastrowid
+
+def get_store_product_by_id(store_product_id):
+    conn = get_connection()
+    with conn:
+        cursor = conn.cursor()
+        query = '''
+                    SELECT * FROM store_products WHERE store_product_id = ?;
+                '''
+        cursor.execute(query, (store_product_id,))
+        return cursor.fetchone()
+    
+# Orders
+
+def add_order(user_id, customer_id, store_id, order_date, total_price, status, address, order_items):
+    conn = get_connection()
+    with conn:
+        cursor = conn.cursor()
+        order_itemsjson = arr2json(order_items)
+        query = '''
+                    INSERT INTO orders (user_id, customer_id, store_id, order_date, total_price, status, address, order_items) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+                '''
+        cursor.execute(query, (user_id, customer_id, store_id, order_date, total_price, status, address, order_itemsjson))
+        return cursor.lastrowid
+
+def get_order_by_id(order_id):
+    conn = get_connection()
+    with conn:
+        cursor = conn.cursor()
+        query = '''
+                    SELECT * FROM orders WHERE order_id = ?;
+                '''
+        cursor.execute(query, (order_id,))
+        return cursor.fetchone()
+    
+def get_order_by_user_id(user_id):
+    conn = get_connection()
+    with conn:
+        cursor = conn.cursor()
+        query = '''
+                    SELECT * FROM orders WHERE user_id = ?;
+                '''
+        cursor.execute(query, (user_id,))
+        return cursor.fetchall()

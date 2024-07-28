@@ -4,7 +4,6 @@ CREATE TABLE Users (
     username VARCHAR(50) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
-
     user_type ENUM('store_owner', 'customer') NOT NULL
 );
 
@@ -15,8 +14,6 @@ CREATE TABLE Stores (
     owner_id INT NOT NULL,
     address TEXT,
     phone_number VARCHAR(20),
-    delivery_options TEXT,
-    payment_methods TEXT,
     FOREIGN KEY (owner_id) REFERENCES Users(user_id)
 );
 
@@ -36,8 +33,7 @@ CREATE TABLE Store_Products (
     store_id INT NOT NULL,
     product_id INT NOT NULL,
     price DECIMAL(10, 2) NOT NULL,
-    stock_quantity INT,
-    is_available BOOLEAN DEFAULT TRUE,
+    quantity INT,
     FOREIGN KEY (store_id) REFERENCES Stores(store_id),
     FOREIGN KEY (product_id) REFERENCES Products(product_id)
 );
@@ -52,34 +48,11 @@ CREATE TABLE Orders (
     status ENUM('pending', 'confirmed', 'delivered', 'cancelled') DEFAULT 'pending',
     payment_method VARCHAR(50),
     delivery_address TEXT,
+    order_items TEXT,
     FOREIGN KEY (customer_id) REFERENCES Users(user_id),
     FOREIGN KEY (store_id) REFERENCES Stores(store_id)
 );
 
--- Order_Items Table
-CREATE TABLE Order_Items (
-    order_item_id INT PRIMARY KEY AUTO_INCREMENT,
-    order_id INT NOT NULL,
-    store_product_id INT NOT NULL,
-    quantity INT NOT NULL,
-    price_per_unit DECIMAL(10, 2) NOT NULL,
-    subtotal DECIMAL(10, 2) NOT NULL,
-    FOREIGN KEY (order_id) REFERENCES Orders(order_id),
-    FOREIGN KEY (store_product_id) REFERENCES Store_Products(store_product_id)
-);
-
--- Messages Table
-CREATE TABLE Messages (
-    message_id INT PRIMARY KEY AUTO_INCREMENT,
-    sender_id INT NOT NULL,
-    receiver_id INT NOT NULL,
-    order_id INT,
-    message_content TEXT NOT NULL,
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (sender_id) REFERENCES Users(user_id),
-    FOREIGN KEY (receiver_id) REFERENCES Users(user_id),
-    FOREIGN KEY (order_id) REFERENCES Orders(order_id)
-);
 
 -- Indexes for better query performance
 CREATE INDEX idx_store_owner ON Stores(owner_id);
@@ -89,4 +62,3 @@ CREATE INDEX idx_order_store ON Orders(store_id);
 CREATE INDEX idx_order_item_order ON Order_Items(order_id);
 CREATE INDEX idx_message_sender ON Messages(sender_id);
 CREATE INDEX idx_message_receiver ON Messages(receiver_id);
-CREATE INDEX idx_message_order ON Messages(order_id);

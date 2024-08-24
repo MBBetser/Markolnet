@@ -1,147 +1,65 @@
-from .db import get_connection
-from .myutils import arr2json
+from sqlalchemy import Column, Integer, String, ForeignKey, Text
+from sqlalchemy.orm import relationship
+from .db import db
+from flask_login import UserMixin
 
-# Users
-def add_user(username, password, user_type):
-    conn = get_connection()
-    with conn:
-        cursor = conn.cursor()
-        query = '''
-                    INSERT INTO users (username, password, user_type) 
-                    VALUES (?, ?, ?);
-                '''
-        cursor.execute(query, (username, password, user_type))
-        return cursor.lastrowid
-    
-def get_user_by_id(user_id):
-    conn = get_connection()
-    with conn:
-        cursor = conn.cursor()
-        query = '''
-                    SELECT * FROM users WHERE id = ?;
-                '''
-        cursor.execute(query, (user_id,))
-        return cursor.fetchone()
 
-def get_user_by_username(username):
-    conn = get_connection()
-    with conn:
-        cursor = conn.cursor()
-        query = '''
-                    SELECT * FROM users WHERE username = ?;
-                '''
-        cursor.execute(query, (username,))
-        return cursor.fetchone()
-    
-#Stores
+class User(db.Model, UserMixin):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(150), unique=True, nullable=False)
+    password = db.Column(db.String(150), nullable=False)
+    user_type = db.Column(db.String(50), nullable=False)
+    stores = relationship('Store', back_populates='owner')
+    sent_messages = relationship('Message', foreign_keys='Message.sender_id', back_populates='sender')
+    received_messages = relationship('Message', foreign_keys='Message.receiver_id', back_populates='receiver')
+    orders = relationship('Order', foreign_keys='Order.customer_id', back_populates='customer')
 
-def add_store(store_name, onwer_id, address, phone_number):
-    conn = get_connection()
-    with conn:
-        cursor = conn.cursor()
-        query = '''
-                    INSERT INTO stores (store_name, owner_id, address, phone_number) 
-                    VALUES (?, ?, ?, ?);
-                '''
-        cursor.execute(query, (store_name, onwer_id, address, phone_number))
-        return cursor.lastrowid
+    @property
+    def is_active(self):
+        return True
+        
+    def get_id(self):
+        return str(self.id)
 
-def get_store_by_id(store_id):
-    conn = get_connection()
-    with conn:
-        cursor = conn.cursor()
-        query = '''
-                    SELECT * FROM stores WHERE store_id = ?;
-                '''
-        cursor.execute(query, (store_id,))
-        return cursor.fetchone()
-    
-def get_store_by_owner_id(owner_id):
-    conn = get_connection()
-    with conn:
-        cursor = conn.cursor()
-        query = '''
-                    SELECT * FROM stores WHERE owner_id = ?;
-                '''
-        cursor.execute(query, (owner_id,))
-        return cursor.fetchall()
-    
-# Products
+class Store(db.Model):
+    __tablename__ = 'stores'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    owner_id = Column(Integer, ForeignKey('users.id'))
+    name = Column(String, nullable=False)
+    owner = relationship('User', back_populates='stores')
+    products = relationship('StoreProduct', back_populates='store')
+    orders = relationship('Order', foreign_keys='Order.store_id', back_populates='store')
 
-def add_product(product_name, description, category, price, image_url):
-    conn = get_connection()
-    with conn:
-        cursor = conn.cursor()
-        query = '''
-                    INSERT INTO products (product_name, description, category, price, image_url) 
-                    VALUES (?, ?, ?, ?, ?);
-                '''
-        cursor.execute(query, (product_name, description, category, price, image_url))
-        return cursor.lastrowid
+class StoreProduct(db.Model):
+    __tablename__ = 'store_products'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    store_id = Column(Integer, ForeignKey('stores.id'))
+    product_id = Column(Integer)
+    store = relationship('Store', back_populates='products')
 
-def get_product_by_id(product_id):
-    conn = get_connection()
-    with conn:
-        cursor = conn.cursor()
-        query = '''
-                    SELECT * FROM products WHERE product_id = ?;
-                '''
-        cursor.execute(query, (product_id,))
-        return cursor.fetchone()
-    
-# store products
+class Order(db.Model):
+    __tablename__ = 'orders'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    customer_id = Column(Integer, ForeignKey('users.id'))
+    store_id = Column(Integer, ForeignKey('stores.id'))
+    customer = relationship('User', back_populates='orders')
+    store = relationship('Store', back_populates='orders')
+    items = relationship('OrderItem', back_populates='order')
 
-def add_store_product(store_id, product_id, quantity, price):
-    conn = get_connection()
-    with conn:
-        cursor = conn.cursor()
-        query = '''
-                    INSERT INTO store_products (store_id, product_id, price, quantity) 
-                    VALUES (?, ?, ?);
-                '''
-        cursor.execute(query, (store_id, product_id, quantity))
-        return cursor.lastrowid
+class OrderItem(db.Model):
+    __tablename__ = 'order_items'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    order_id = Column(Integer, ForeignKey('orders.id'))
+    product_id = Column(Integer)
+    quantity = Column(Integer)
+    order = relationship('Order', back_populates='items')
 
-def get_store_product_by_id(store_product_id):
-    conn = get_connection()
-    with conn:
-        cursor = conn.cursor()
-        query = '''
-                    SELECT * FROM store_products WHERE store_product_id = ?;
-                '''
-        cursor.execute(query, (store_product_id,))
-        return cursor.fetchone()
-    
-# Orders
-
-def add_order(user_id, customer_id, store_id, order_date, total_price, status, address, order_items):
-    conn = get_connection()
-    with conn:
-        cursor = conn.cursor()
-        order_itemsjson = arr2json(order_items)
-        query = '''
-                    INSERT INTO orders (user_id, customer_id, store_id, order_date, total_price, status, address, order_items) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?);
-                '''
-        cursor.execute(query, (user_id, customer_id, store_id, order_date, total_price, status, address, order_itemsjson))
-        return cursor.lastrowid
-
-def get_order_by_id(order_id):
-    conn = get_connection()
-    with conn:
-        cursor = conn.cursor()
-        query = '''
-                    SELECT * FROM orders WHERE order_id = ?;
-                '''
-        cursor.execute(query, (order_id,))
-        return cursor.fetchone()
-    
-def get_order_by_user_id(user_id):
-    conn = get_connection()
-    with conn:
-        cursor = conn.cursor()
-        query = '''
-                    SELECT * FROM orders WHERE user_id = ?;
-                '''
-        cursor.execute(query, (user_id,))
-        return cursor.fetchall()
+class Message(db.Model):
+    __tablename__ = 'messages'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    sender_id = Column(Integer, ForeignKey('users.id'))
+    receiver_id = Column(Integer, ForeignKey('users.id'))
+    content = Column(Text, nullable=False)
+    sender = relationship('User', foreign_keys=[sender_id], back_populates='sent_messages')
+    receiver = relationship('User', foreign_keys=[receiver_id], back_populates='received_messages')

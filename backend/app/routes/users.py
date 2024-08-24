@@ -1,6 +1,7 @@
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, request, jsonify
 from ..db import *
-from ..models import *
+from ..models import User
+from flask_login import login_user, logout_user, login_required, current_user
 
 user_routes = Blueprint('user_routes', __name__, url_prefix='/users')
 @user_routes.route('/')
@@ -17,10 +18,12 @@ def signup():
     if not username or not password:
         return jsonify({"message": "Missing username or password"}), 400
     
-    if get_user_by_username(username):
+    if User.query.filter_by(username=username).first():
         return jsonify({"message": "User already exists"}), 409
     else:
-        add_user(username, password, user_type)
+        user = User(username=username, password=password, user_type=user_type)
+        db.session.add(user)
+        db.session.commit()
         return jsonify({"message": "User created"}), 201
 
 
@@ -36,23 +39,21 @@ def login():
     if not username or not password:
         return jsonify({"message": "Missing username or password"}), 400
     
-    user = get_user_by_username(username)
-    if user and user['password'] == password:
-        session['user_id'] = user['id']
-        session['username'] = user['username']
+    user = User.query.filter_by(username=username, password=password).first()
+    if user:
+        login_user(user)
         return jsonify({"message": "Login successful"}), 200
     else:
         return jsonify({"message": "Invalid username or password"}), 401
     
+    
 @user_routes.route('/logout')
+@login_required
 def logout():
-    session.clear()
+    logout_user()
     return jsonify({"message": "Logged out"}), 200
 
-@user_routes.route('/profile')
-def profile():
-    if 'user_id' in session:
-        user = get_user_by_id(session['user_id'])
-        return jsonify(user), 200
-    else:
-        return jsonify({"message": "Not logged in"}), 401
+@user_routes.route('/protected')
+@login_required
+def protected():
+    return f'Hello, {current_user.username}!'

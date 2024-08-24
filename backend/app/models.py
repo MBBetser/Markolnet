@@ -2,16 +2,26 @@ from .db import get_connection
 from .myutils import arr2json
 
 # Users
-def add_user(username, password, email, phone_numer, user_type):
+def add_user(username, password, user_type):
     conn = get_connection()
     with conn:
         cursor = conn.cursor()
         query = '''
-                    INSERT INTO users (username, password, email, phone_number, user_type) 
-                    VALUES (?, ?, ?, ?, ?);
+                    INSERT INTO users (username, password, user_type) 
+                    VALUES (?, ?, ?);
                 '''
-        cursor.execute(query, (username, password, email, phone_numer, user_type))
+        cursor.execute(query, (username, password, user_type))
         return cursor.lastrowid
+    
+def get_user_by_id(user_id):
+    conn = get_connection()
+    with conn:
+        cursor = conn.cursor()
+        query = '''
+                    SELECT * FROM users WHERE id = ?;
+                '''
+        cursor.execute(query, (user_id,))
+        return cursor.fetchone()
 
 def get_user_by_username(username):
     conn = get_connection()

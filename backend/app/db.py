@@ -1,7 +1,7 @@
 from flask import current_app, g
 import sqlite3
 import click
-import json
+
 
 def get_connection():
     if 'db' not in g:

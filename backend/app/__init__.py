@@ -9,7 +9,6 @@ def create_app():
         SECRET_KEY='dev',
         DATABASE=os.path.join(app.instance_path, 'handy.sqlite'),
     )
-
     try:
         os.makedirs(app.instance_path)
     except OSError:
@@ -17,6 +16,8 @@ def create_app():
     db.init_app(app)
     for blueprint in all_blueprints:
         app.register_blueprint(blueprint)
+
+    app.run(debug=True)   
     @app.route('/')
     def test():
         return 'Hey from main route!'

@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, render_template
 import os
 from . import db
 from .routes import all_blueprints
@@ -32,7 +32,7 @@ def create_app():
 
     app.run(debug=True)   
     @app.route('/')
-    def test():
-        return 'Hey from main route!'
+    def index():
+        return render_template('index.html')
     return app
 

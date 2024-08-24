@@ -1,30 +1,36 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, render_template, redirect, url_for
 from ..db import *
 from ..models import User
 from flask_login import login_user, logout_user, login_required, current_user
 
 user_routes = Blueprint('user_routes', __name__, url_prefix='/users')
-@user_routes.route('/')
-def test():
-    return 'Hey from users route!'
+
+@user_routes.route('/') 
+def users():
+    return render_template('users.html')
+
+@user_routes.route('/signup', methods=['GET'])
+def signup_form():
+    return render_template('signup.html')
 
 @user_routes.route('/signup', methods=['POST'])
 def signup():
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
-    user_type = data.get('user_type')
+    user_type = 'customer'
 
     if not username or not password:
         return jsonify({"message": "Missing username or password"}), 400
     
     if User.query.filter_by(username=username).first():
-        return jsonify({"message": "User already exists"}), 409
+        return jsonify({"message": "User already exists"}), 400
     else:
         user = User(username=username, password=password, user_type=user_type)
         db.session.add(user)
         db.session.commit()
-        return jsonify({"message": "User created"}), 201
+        login_user(user)
+        return jsonify({"redirect_url":url_for('index')})
 
 
 @user_routes.route('/login', methods=['GET','POST'])
@@ -42,11 +48,11 @@ def login():
     user = User.query.filter_by(username=username, password=password).first()
     if user:
         login_user(user)
-        return jsonify({"message": "Login successful"}), 200
+        return jsonify({"redirect_url":url_for('index')})
     else:
         return jsonify({"message": "Invalid username or password"}), 401
     
-    
+
 @user_routes.route('/logout')
 @login_required
 def logout():

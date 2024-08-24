@@ -30,7 +30,9 @@ def create_app():
     for blueprint in all_blueprints:
         app.register_blueprint(blueprint)
 
-    app.run(debug=True)   
+    if __name__ == '__main__':
+        app.run(debug=True)   
+
     @app.route('/')
     def index():
         return render_template('index.html')

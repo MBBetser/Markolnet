@@ -36,7 +36,7 @@ def signup():
 @user_routes.route('/login', methods=['GET','POST'])
 def login():
     if request.method == 'GET':
-        return "Login route works with GET"
+        return render_template('users.html')
 
     data = request.get_json()
     username = data.get('username')
@@ -63,3 +63,9 @@ def logout():
 @login_required
 def protected():
     return f'Hello, {current_user.username}!'
+
+#TODO REMOVE
+@user_routes.route('/all')
+def all_users():
+    users = User.query.all()
+    return jsonify([user.to_dict() for user in users])

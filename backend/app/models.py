@@ -22,6 +22,13 @@ class User(db.Model, UserMixin):
     def get_id(self):
         return str(self.id)
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'username': self.username,
+            'user_type': self.user_type
+        }
+    
 class Store(db.Model):
     __tablename__ = 'stores'
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -31,12 +38,38 @@ class Store(db.Model):
     products = relationship('StoreProduct', back_populates='store')
     orders = relationship('Order', foreign_keys='Order.store_id', back_populates='store')
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'owner_id': self.owner_id,
+            'name': self.name,
+            'products': [product.product.name for product in self.products],
+            'orders' : [order.id for order in self.orders]
+        }
+
+class Product(db.Model):
+    __tablename__ = 'products'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String, nullable=False)
+    price = Column(Integer)
+    stores = relationship('StoreProduct', back_populates='product')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'price': self.price
+        }
+    
+    
 class StoreProduct(db.Model):
     __tablename__ = 'store_products'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    store_id = Column(Integer, ForeignKey('stores.id'))
-    product_id = Column(Integer)
+    store_id = Column(Integer, ForeignKey('stores.id'), primary_key=True)
+    product_id = Column(Integer, ForeignKey('products.id'), primary_key=True)
+    quantity = Column(Integer, default=0)
+    
     store = relationship('Store', back_populates='products')
+    product = relationship('Product', back_populates='stores')
 
 class Order(db.Model):
     __tablename__ = 'orders'

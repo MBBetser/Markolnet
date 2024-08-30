@@ -1,8 +1,10 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, session
 import os
 from . import db
+from .models import User
 from .routes import all_blueprints
-from flask_login import LoginManager
+from flask_login import LoginManager, logout_user
+
 
 def create_app():
     app = Flask(__name__)
@@ -13,28 +15,28 @@ def create_app():
     )
     login_manager = LoginManager(app)
     login_manager.login_view = 'login'
-
-    from .models import User
-
+    login_manager.init_app(app)
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
-    
+
     try:
         os.makedirs(app.instance_path)
     except OSError:
         pass
 
     db.init_app(app)
-
     for blueprint in all_blueprints:
         app.register_blueprint(blueprint)
 
+
     if __name__ == '__main__':
-        app.run(debug=True)   
+        app.run()
 
     @app.route('/')
     def index():
         return render_template('index.html')
+    
+    
     return app
 

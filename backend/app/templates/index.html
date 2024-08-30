@@ -1,5 +1,21 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
-{% block title %}xx{% endblock %}
+{% block title %}Welcome to Markolnet{% endblock %}
+
 {% block content %}
+<!-- Hero Section -->
+<div class="container mt-5">
+    <div class="jumbotron text-center">
+        <h1 class="display-4">Welcome to Markolnet</h1>
+        <p class="lead">Your Gateway to buy fresh produce from your neighbours</p>
+        <hr class="my-4">
+        <p>
+            This website is a local marketplace where neighbors can sell excess produce they can't use before it spoils. 
+            Whether overbought or due to travel plans, users can quickly list items at low prices, reducing food waste and providing affordable options for others nearby. 
+            It’s a simple way to save money and build a stronger community through resource-sharing.
+        </p>
+        <p>See sellers around your area.</p>
+        <a class="btn btn-primary btn-lg" href="{{ url_for('stores_route.stores') }}" role="button">Explore</a>
+    </div>
+</div>
 {% endblock %}

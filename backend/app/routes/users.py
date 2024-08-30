@@ -2,8 +2,10 @@ from flask import Blueprint, request, jsonify, render_template, redirect, url_fo
 from ..db import *
 from ..models import User
 from flask_login import login_user, logout_user, login_required, current_user
+import requests
 
 user_routes = Blueprint('user_routes', __name__, url_prefix='/users')
+
 
 @user_routes.route('/') 
 def users():
@@ -20,6 +22,7 @@ def signup():
     password = data.get('password')
     user_type = 'customer'
 
+
     if not username or not password:
         return jsonify({"message": "Missing username or password"}), 400
     
@@ -29,8 +32,16 @@ def signup():
         user = User(username=username, password=password, user_type=user_type)
         db.session.add(user)
         db.session.commit()
-        login_user(user)
-        return jsonify({"redirect_url":url_for('index')})
+        store_data = {
+            'owner_id': user.id,
+            'name': f"{username}'s Store"
+        }
+        store_creation_response = requests.post(url_for('stores_route.create_store', _external=True), json=store_data)
+
+        if store_creation_response.status_code != 200:
+            return jsonify({"message": "User created, but failed to create store"}), 500
+
+        return jsonify({"redirect_url":url_for('user_routes.login')})
 
 
 @user_routes.route('/login', methods=['GET','POST'])
@@ -41,7 +52,6 @@ def login():
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
-
     if not username or not password:
         return jsonify({"message": "Missing username or password"}), 400
     
@@ -51,7 +61,7 @@ def login():
         return jsonify({"redirect_url":url_for('index')})
     else:
         return jsonify({"message": "Invalid username or password"}), 401
-    
+
 
 @user_routes.route('/logout')
 @login_required

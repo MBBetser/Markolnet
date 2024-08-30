@@ -18,7 +18,8 @@ class User(db.Model, UserMixin):
     @property
     def is_active(self):
         return True
-        
+    
+
     def get_id(self):
         return str(self.id)
 
@@ -51,14 +52,17 @@ class Product(db.Model):
     __tablename__ = 'products'
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, nullable=False)
-    price = Column(Integer)
+    image_path = Column(String)
     stores = relationship('StoreProduct', back_populates='product')
 
+    def getidbyname(self, name):
+        return Product.query.filter_by(name=name).first().id
+    
     def to_dict(self):
         return {
             'id': self.id,
             'name': self.name,
-            'price': self.price
+            'image_path': self.image_path
         }
     
     
@@ -67,6 +71,7 @@ class StoreProduct(db.Model):
     store_id = Column(Integer, ForeignKey('stores.id'), primary_key=True)
     product_id = Column(Integer, ForeignKey('products.id'), primary_key=True)
     quantity = Column(Integer, default=0)
+    price = Column(Integer, default=0)
     
     store = relationship('Store', back_populates='products')
     product = relationship('Product', back_populates='stores')

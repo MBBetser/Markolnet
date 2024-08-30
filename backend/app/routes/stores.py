@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, render_template, redirect, url_for
-from ..models import Store, StoreProduct
+from ..models import Store, StoreProduct, Product
 from ..db import db
 from flask_login import current_user
 store_routes = Blueprint('stores_route', __name__, url_prefix='/stores')
@@ -32,7 +32,8 @@ def store(store_id, methods=['GET']):
     store = Store.query.get(store_id)
     if not store:
         return jsonify({"message": "Store not found"}), 404
-    return render_template('store.html', store=store, current_user=current_user)
+    available_products = Product.query.all()
+    return render_template('store.html', store=store, current_user=current_user, available_products=available_products)
 
 
 # ADD PRODUCTS--------------------
@@ -58,7 +59,12 @@ def add_product(store_id, product_id):
         return jsonify({"message": "Quantity not found"}), 404
     
     if StoreProduct.query.filter_by(store_id=store_id, product_id=product_id).first():
-        return jsonify({"message": "Product already exists in store"}), 400
+        store_product = StoreProduct.query.filter_by(store_id=store_id, product_id=product_id).first()
+        store_product.quantity += quantity
+        if price != store_product.price:
+            store_product.price = price
+        db.session.commit()
+        return jsonify({"redirect_url":url_for('stores_route.store', store_id=store_id)})
     
     store_product = StoreProduct(
         store_id=store_id,
@@ -88,8 +94,3 @@ def add_product_from_web(store_id):
     db.session.add(store_product)
     db.session.commit()
     return jsonify(store.to_dict())
-
-@store_routes.route('/all')
-def all_stores():
-    stores = Store.query.all()
-    return jsonify([store.to_dict() for store in stores])

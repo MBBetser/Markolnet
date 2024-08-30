@@ -20,6 +20,10 @@ def signup():
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
+    email = data.get('email')
+    phone_number = data.get('phone_number')
+    longitude = data.get('longitude')
+    latitude = data.get('latitude')
     user_type = 'customer'
 
 
@@ -29,7 +33,14 @@ def signup():
     if User.query.filter_by(username=username).first():
         return jsonify({"message": "User already exists"}), 400
     else:
-        user = User(username=username, password=password, user_type=user_type)
+        user = User(username=username,
+                    password=password,
+                    phone_number=phone_number,
+                    email=email,
+                    longitude=longitude,
+                    latitude=latitude,
+                    user_type=user_type)
+        
         db.session.add(user)
         db.session.commit()
         store_data = {
@@ -67,15 +78,18 @@ def login():
 @login_required
 def logout():
     logout_user()
-    return jsonify({"message": "Logged out"}), 200
+    return render_template('index.html')
 
 @user_routes.route('/protected')
 @login_required
 def protected():
     return f'Hello, {current_user.username}!'
 
-#TODO REMOVE
-@user_routes.route('/all')
-def all_users():
-    users = User.query.all()
-    return jsonify([user.to_dict() for user in users])
+@user_routes.route('/remove-<int:user_id>')
+def remove_user(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+    db.session.delete(user)
+    db.session.commit()
+    return jsonify({"message": "User deleted"}), 200

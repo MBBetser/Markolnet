@@ -10,6 +10,10 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
     user_type = db.Column(db.String(50), nullable=False)
+    phone_number = db.Column(db.String(15), nullable=True)
+    email = db.Column(db.String(150), nullable=True)
+    latitude = db.Column(db.Float, nullable=True)  # Latitude column
+    longitude = db.Column(db.Float, nullable=True)  # Longitude column
     stores = relationship('Store', back_populates='owner')
     cart = db.relationship('Cart', uselist=False, back_populates='user')
 
@@ -25,7 +29,9 @@ class User(db.Model, UserMixin):
         return {
             'id': self.id,
             'username': self.username,
-            'user_type': self.user_type
+            'password': self.password,
+            'user_type': self.user_type,
+            'phone_number': self.phone_number,
         }
     
 

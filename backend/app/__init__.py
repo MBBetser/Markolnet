@@ -14,7 +14,7 @@ def create_app():
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
     )
     login_manager = LoginManager(app)
-    login_manager.login_view = 'login'
+    login_manager.login_view = 'user_routes.login'
     login_manager.init_app(app)
     @login_manager.user_loader
     def load_user(user_id):

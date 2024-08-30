@@ -4,8 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Signup</title>
+    
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    
+    <style>
+        #map { 
+            height: 300px; 
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body class="bg-light">
     <div class="container">
@@ -25,7 +36,23 @@
                                 <label for="password" class="form-label">Password:</label>
                                 <input type="password" class="form-control" id="password" name="password" required>
                             </div>
-                            <div class="d-grid">
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email:</label>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="phone" class="form-label">Phone Number:</label>
+                                <input type="tel" class="form-control" id="phone" name="phone" required>
+                            </div>
+                            
+                            <!-- Map Container -->
+                            <div id="map"></div>
+
+                            <!-- Hidden input fields to store latitude and longitude -->
+                            <input type="hidden" id="latitude" name="latitude">
+                            <input type="hidden" id="longitude" name="longitude">
+
+                            <div class="d-grid mt-3">
                                 <button type="submit" class="btn btn-primary">Submit</button>
                             </div>
                         </form>
@@ -38,13 +65,49 @@
     <!-- Bootstrap JS (optional, but needed for some Bootstrap features) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Initialize the map and set its view to Tel Aviv
+        var map = L.map('map').setView([32.0853, 34.7818], 13); 
+
+        // Add a tile layer to the map (OpenStreetMap tiles)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Initialize a marker
+        var marker = L.marker([32.0853, 34.7818], {draggable: true}).addTo(map);
+
+        // Function to update hidden input fields with marker position
+        function updateLocationInputs(lat, lng) {
+            document.getElementById('latitude').value = lat;
+            document.getElementById('longitude').value = lng;
+        }
+
+        // Update inputs when marker is dragged
+        marker.on('dragend', function(e) {
+            var lat = marker.getLatLng().lat;
+            var lng = marker.getLatLng().lng;
+            updateLocationInputs(lat, lng);
+        });
+
+        // Update inputs initially with default location
+        updateLocationInputs(32.0853, 34.7818);
+
+        // Form submission with Leaflet
         document.getElementById('signup-form').addEventListener('submit', function(event) {
             event.preventDefault(); // Prevent the default form submission
 
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+            const latitude = document.getElementById('latitude').value;
+            const longitude = document.getElementById('longitude').value;
 
             fetch("{{ url_for('user_routes.signup') }}", {
                 method: 'POST',
@@ -53,15 +116,18 @@
                 },
                 body: JSON.stringify({
                     username: username,
-                    password: password
+                    password: password,
+                    email: email,
+                    phone: phone,
+                    latitude: latitude,
+                    longitude: longitude
                 })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.message) {
                     alert(data.message);
-                }
-                else {
+                } else {
                     window.location.href = data.redirect_url;
                 }
             })

@@ -28,14 +28,14 @@
                             <a class="nav-link" href="{{ url_for('user_routes.logout') }}">Logout</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('stores_route.all_stores') }}">Stores</a>
+                            <a class="nav-link" href="{{ url_for('stores_route.stores') }}">Stores</a>
                         </li>
                         {% else %}
                         <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('user_routes.login') }}">Login</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('stores_route.all_stores') }}">Stores</a>
+                            <a class="nav-link" href="{{ url_for('stores_route.stores') }}">Stores</a>
                         </li>
                         {% endif %}
                         <li class="nav-item">

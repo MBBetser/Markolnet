@@ -11,9 +11,7 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(150), nullable=False)
     user_type = db.Column(db.String(50), nullable=False)
     stores = relationship('Store', back_populates='owner')
-    sent_messages = relationship('Message', foreign_keys='Message.sender_id', back_populates='sender')
-    received_messages = relationship('Message', foreign_keys='Message.receiver_id', back_populates='receiver')
-    orders = relationship('Order', foreign_keys='Order.customer_id', back_populates='customer')
+    cart = db.relationship('Cart', uselist=False, back_populates='user')
 
     @property
     def is_active(self):
@@ -30,6 +28,24 @@ class User(db.Model, UserMixin):
             'user_type': self.user_type
         }
     
+
+class Cart(db.Model):
+    __tablename__ = 'carts'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    user = db.relationship('User', back_populates='cart')
+    items = db.relationship('CartItem', back_populates='cart', cascade='all, delete-orphan')
+
+class CartItem(db.Model):
+    __tablename__ = 'cart_items'
+    id = db.Column(db.Integer, primary_key=True)
+    cart_id = db.Column(db.Integer, db.ForeignKey('carts.id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False)
+    price = db.Column(db.Integer, nullable=False)  # Price at the time of adding to cart
+    cart = db.relationship('Cart', back_populates='items')
+    product = db.relationship('Product')
+    
 class Store(db.Model):
     __tablename__ = 'stores'
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -37,7 +53,6 @@ class Store(db.Model):
     name = Column(String, nullable=False)
     owner = relationship('User', back_populates='stores')
     products = relationship('StoreProduct', back_populates='store')
-    orders = relationship('Order', foreign_keys='Order.store_id', back_populates='store')
 
     def to_dict(self):
         return {
@@ -45,8 +60,8 @@ class Store(db.Model):
             'owner_id': self.owner_id,
             'name': self.name,
             'products': [product.product.name for product in self.products],
-            'orders' : [order.id for order in self.orders]
         }
+    
 
 class Product(db.Model):
     __tablename__ = 'products'
@@ -54,6 +69,7 @@ class Product(db.Model):
     name = Column(String, nullable=False)
     image_path = Column(String)
     stores = relationship('StoreProduct', back_populates='product')
+    cart_items = db.relationship('CartItem', back_populates='product')
 
     def getidbyname(self, name):
         return Product.query.filter_by(name=name).first().id
@@ -75,29 +91,3 @@ class StoreProduct(db.Model):
     
     store = relationship('Store', back_populates='products')
     product = relationship('Product', back_populates='stores')
-
-class Order(db.Model):
-    __tablename__ = 'orders'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    customer_id = Column(Integer, ForeignKey('users.id'))
-    store_id = Column(Integer, ForeignKey('stores.id'))
-    customer = relationship('User', back_populates='orders')
-    store = relationship('Store', back_populates='orders')
-    items = relationship('OrderItem', back_populates='order')
-
-class OrderItem(db.Model):
-    __tablename__ = 'order_items'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    order_id = Column(Integer, ForeignKey('orders.id'))
-    product_id = Column(Integer)
-    quantity = Column(Integer)
-    order = relationship('Order', back_populates='items')
-
-class Message(db.Model):
-    __tablename__ = 'messages'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    sender_id = Column(Integer, ForeignKey('users.id'))
-    receiver_id = Column(Integer, ForeignKey('users.id'))
-    content = Column(Text, nullable=False)
-    sender = relationship('User', foreign_keys=[sender_id], back_populates='sent_messages')
-    receiver = relationship('User', foreign_keys=[receiver_id], back_populates='received_messages')

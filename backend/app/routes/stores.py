@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, render_template, redirect, url_for
 from ..models import Store, StoreProduct
 from ..db import db
+from flask_login import current_user
 store_routes = Blueprint('stores_route', __name__, url_prefix='/stores')
 @store_routes.route('/')
 def stores():
@@ -31,7 +32,7 @@ def store(store_id, methods=['GET']):
     store = Store.query.get(store_id)
     if not store:
         return jsonify({"message": "Store not found"}), 404
-    return render_template('store.html', store=store)
+    return render_template('store.html', store=store, current_user=current_user)
 
 
 # ADD PRODUCTS--------------------
@@ -72,9 +73,7 @@ def add_product(store_id, product_id):
 
 @store_routes.route('/<int:store_id>/product/add-products', methods=['POST'])
 def add_product_from_web(store_id):
-    print('add product2')
     data = request.get_json()
-    print("maor: ",data)
     product_id = data.get('product_id')
     quantity = data.get('quantity')
     price = 10

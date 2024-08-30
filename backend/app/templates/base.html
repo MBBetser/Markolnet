@@ -20,12 +20,9 @@
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav ms-auto">
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('index') }}">Home</a>
-                        </li>
                         {% if current_user.is_authenticated %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('stores_route.store', store_id=current_user.id) }}">{{ current_user.username }} Store</a>
+                            <a class="nav-link" href="{{ url_for('stores_route.store', store_id=current_user.id) }}">My Store</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('user_routes.logout') }}">Logout</a>
@@ -41,6 +38,9 @@
                             <a class="nav-link" href="{{ url_for('stores_route.all_stores') }}">Stores</a>
                         </li>
                         {% endif %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('cart.get_cart') }}">Cart</a>
+                        </li>
                     </ul>
                 </div>
             </div>
